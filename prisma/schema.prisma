@@ -1,0 +1,193 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BountyStatus {
+  OPEN
+  CLAIMED
+  SUBMITTED
+  APPROVED
+  REJECTED
+  CANCELLED
+  DISPUTED
+}
+
+enum BountyDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model Bounty {
+  id                String           @id @default(cuid())
+  title             String
+  description       String
+  rewardAmount      Decimal          @db.Decimal(20, 7)
+  rewardAsset       String           @default("XLM")
+  status            BountyStatus     @default(OPEN)
+  difficulty        BountyDifficulty @default(MEDIUM)
+
+  // GitHub integration
+  githubIssueUrl    String?          @unique
+  githubIssueNumber Int?
+  githubRepoOwner   String?
+  githubRepoName    String?
+  githubLabels      String[]         @default([])
+
+  // Stellar/Soroban integration
+  contractAddress   String?
+  escrowTxHash      String?
+  releaseTxHash     String?
+
+  // Relations
+  creatorId         String
+  creator           Contributor      @relation("CreatedBounties", fields: [creatorId], references: [id])
+  claimantId        String?
+  claimant          Contributor?     @relation("ClaimedBounties", fields: [claimantId], references: [id])
+
+  // Timestamps
+  claimedAt         DateTime?
+  submittedAt       DateTime?
+  approvedAt        DateTime?
+  expiresAt         DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Nested
+  submissions       Submission[]
+  disputes          Dispute[]
+  milestones        Milestone[]
+
+  @@index([status])
+  @@index([creatorId])
+  @@index([claimantId])
+  @@index([githubRepoOwner, githubRepoName])
+}
+
+model Contributor {
+  id                String    @id @default(cuid())
+  stellarAddress    String    @unique
+  githubUsername    String?   @unique
+  githubId          Int?      @unique
+  displayName       String?
+  avatarUrl         String?
+  bio               String?
+
+  // Stats
+  bountiesCompleted Int       @default(0)
+  totalEarned       Decimal   @default(0) @db.Decimal(20, 7)
+  reputationScore   Int       @default(0)
+
+  // Auth
+  nonce             String?   // for Stellar keypair challenge signing
+  lastLoginAt       DateTime?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  createdBounties   Bounty[]  @relation("CreatedBounties")
+  claimedBounties   Bounty[]  @relation("ClaimedBounties")
+  submissions       Submission[]
+  disputes          Dispute[]
+  notifications     Notification[]
+
+  @@index([stellarAddress])
+  @@index([githubUsername])
+  @@index([reputationScore])
+}
+
+model Submission {
+  id            String    @id @default(cuid())
+  bountyId      String
+  bounty        Bounty    @relation(fields: [bountyId], references: [id])
+  contributorId String
+  contributor   Contributor @relation(fields: [contributorId], references: [id])
+
+  prUrl         String?
+  description   String
+  notes         String?
+  reviewNotes   String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([bountyId])
+  @@index([contributorId])
+}
+
+model Milestone {
+  id            String    @id @default(cuid())
+  bountyId      String
+  bounty        Bounty    @relation(fields: [bountyId], references: [id])
+
+  title         String
+  description   String?
+  rewardPercent Int       // percentage of total bounty reward
+  completed     Boolean   @default(false)
+  completedAt   DateTime?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([bountyId])
+}
+
+model Dispute {
+  id            String    @id @default(cuid())
+  bountyId      String
+  bounty        Bounty    @relation(fields: [bountyId], references: [id])
+  raisedById    String
+  raisedBy      Contributor @relation(fields: [raisedById], references: [id])
+
+  reason        String
+  evidence      String?
+  resolution    String?
+  resolved      Boolean   @default(false)
+  resolvedAt    DateTime?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([bountyId])
+  @@index([raisedById])
+}
+
+model Notification {
+  id            String    @id @default(cuid())
+  recipientId   String
+  recipient     Contributor @relation(fields: [recipientId], references: [id])
+
+  type          String    // e.g. BOUNTY_CLAIMED, SUBMISSION_APPROVED
+  title         String
+  body          String
+  metadata      Json?
+  read          Boolean   @default(false)
+  deliveredAt   DateTime?
+
+  createdAt     DateTime  @default(now())
+
+  @@index([recipientId, read])
+}
+
+model WebhookDelivery {
+  id            String    @id @default(cuid())
+  eventType     String
+  payload       Json
+  source        String    // "github" | "stellar"
+  processed     Boolean   @default(false)
+  processedAt   DateTime?
+  error         String?
+
+  createdAt     DateTime  @default(now())
+
+  @@index([eventType, processed])
+}
