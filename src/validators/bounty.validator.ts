@@ -1,4 +1,4 @@
-import { BountyDifficulty } from '@prisma/client';
+import { BountyDifficulty, BountyStatus } from '@prisma/client';
 import type { Request, Response, NextFunction } from 'express';
 
 export interface ValidationError {
@@ -37,7 +37,7 @@ function validateCreateBounty(req: Request, res: Response, next: NextFunction): 
     errors.push({ field: 'rewardAmount', message: 'Reward amount must be a positive number' });
   }
 
-  // rewardAsset (optional, default XLM)
+  // rewardAsset (optional)
   if (body.rewardAsset !== undefined && typeof body.rewardAsset !== 'string') {
     errors.push({ field: 'rewardAsset', message: 'Reward asset must be a string' });
   }
@@ -120,6 +120,88 @@ function validateCreateBounty(req: Request, res: Response, next: NextFunction): 
   next();
 }
 
+function validateListBounties(req: Request, res: Response, next: NextFunction): void {
+  const errors: ValidationError[] = [];
+  const query = req.query as Record<string, unknown>;
+
+  // status filter
+  if (
+    query.status !== undefined &&
+    !Object.values(BountyStatus).includes(query.status as BountyStatus)
+  ) {
+    errors.push({
+      field: 'status',
+      message: `status must be one of: ${Object.values(BountyStatus).join(', ')}`,
+    });
+  }
+
+  // difficulty filter
+  if (
+    query.difficulty !== undefined &&
+    !Object.values(BountyDifficulty).includes(query.difficulty as BountyDifficulty)
+  ) {
+    errors.push({
+      field: 'difficulty',
+      message: `difficulty must be one of: ${Object.values(BountyDifficulty).join(', ')}`,
+    });
+  }
+
+  // pagination
+  if (query.page !== undefined) {
+    const page = Number(query.page);
+    if (isNaN(page) || page < 1 || !Number.isInteger(page)) {
+      errors.push({ field: 'page', message: 'page must be a positive integer' });
+    }
+  }
+
+  if (query.limit !== undefined) {
+    const limit = Number(query.limit);
+    if (isNaN(limit) || limit < 1 || limit > 100 || !Number.isInteger(limit)) {
+      errors.push({ field: 'limit', message: 'limit must be an integer between 1 and 100' });
+    }
+  }
+
+  // reward range
+  if (query.minReward !== undefined) {
+    const min = Number(query.minReward);
+    if (isNaN(min) || min < 0) {
+      errors.push({ field: 'minReward', message: 'minReward must be a non-negative number' });
+    }
+  }
+
+  if (query.maxReward !== undefined) {
+    const max = Number(query.maxReward);
+    if (isNaN(max) || max < 0) {
+      errors.push({ field: 'maxReward', message: 'maxReward must be a non-negative number' });
+    }
+  }
+
+  // sortBy
+  const validSortBy = ['createdAt', 'rewardAmount'];
+  if (query.sortBy !== undefined && !validSortBy.includes(query.sortBy as string)) {
+    errors.push({
+      field: 'sortBy',
+      message: `sortBy must be one of: ${validSortBy.join(', ')}`,
+    });
+  }
+
+  // sortOrder
+  if (
+    query.sortOrder !== undefined &&
+    !['asc', 'desc'].includes(query.sortOrder as string)
+  ) {
+    errors.push({ field: 'sortOrder', message: 'sortOrder must be asc or desc' });
+  }
+
+  if (errors.length > 0) {
+    res.status(400).json({ error: 'Validation failed', details: errors });
+    return;
+  }
+
+  next();
+}
+
 export const bountyValidator = {
   validateCreateBounty,
+  validateListBounties,
 };

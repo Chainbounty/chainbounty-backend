@@ -1,16 +1,23 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import type { CreateBountyInput } from '../types/bounty';
-import { BountyDifficulty } from '@prisma/client';
+import type { CreateBountyInput, BountyFilters } from '../types/bounty';
+import { BountyDifficulty, Prisma } from '@prisma/client';
+
+// Shared creator select shape
+const creatorSelect = {
+  id: true,
+  stellarAddress: true,
+  githubUsername: true,
+  displayName: true,
+  avatarUrl: true,
+};
 
 async function createBounty(req: Request, res: Response): Promise<void> {
   try {
     const body = req.body as CreateBountyInput;
 
-    // For now we use a placeholder creator. Auth will be added in step 15.
-    // We upsert a dev contributor so the FK is satisfied.
+    // Placeholder creator until JWT auth lands in step 15
     const DEV_STELLAR = 'GDEV0000000000000000000000000000000000000000000000000000';
-
     const creator = await prisma.contributor.upsert({
       where: { stellarAddress: DEV_STELLAR },
       update: {},
@@ -43,15 +50,7 @@ async function createBounty(req: Request, res: Response): Promise<void> {
             : undefined,
       },
       include: {
-        creator: {
-          select: {
-            id: true,
-            stellarAddress: true,
-            githubUsername: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        },
+        creator: { select: creatorSelect },
         milestones: true,
       },
     });
@@ -63,6 +62,82 @@ async function createBounty(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function listBounties(req: Request, res: Response): Promise<void> {
+  try {
+    const query = req.query as Record<string, string | undefined>;
+
+    const filters: BountyFilters = {
+      status: query.status as BountyFilters['status'],
+      difficulty: query.difficulty as BountyFilters['difficulty'],
+      creatorId: query.creatorId,
+      claimantId: query.claimantId,
+      githubRepoOwner: query.githubRepoOwner,
+      githubRepoName: query.githubRepoName,
+      minReward: query.minReward !== undefined ? Number(query.minReward) : undefined,
+      maxReward: query.maxReward !== undefined ? Number(query.maxReward) : undefined,
+      page: query.page !== undefined ? parseInt(query.page, 10) : 1,
+      limit: query.limit !== undefined ? parseInt(query.limit, 10) : 20,
+      sortBy: (query.sortBy as BountyFilters['sortBy']) ?? 'createdAt',
+      sortOrder: (query.sortOrder as BountyFilters['sortOrder']) ?? 'desc',
+    };
+
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    // Build where clause
+    const where: Prisma.BountyWhereInput = {};
+    if (filters.status) where.status = filters.status;
+    if (filters.difficulty) where.difficulty = filters.difficulty;
+    if (filters.creatorId) where.creatorId = filters.creatorId;
+    if (filters.claimantId) where.claimantId = filters.claimantId;
+    if (filters.githubRepoOwner) where.githubRepoOwner = filters.githubRepoOwner;
+    if (filters.githubRepoName) where.githubRepoName = filters.githubRepoName;
+    if (filters.minReward !== undefined || filters.maxReward !== undefined) {
+      where.rewardAmount = {};
+      if (filters.minReward !== undefined) where.rewardAmount.gte = filters.minReward;
+      if (filters.maxReward !== undefined) where.rewardAmount.lte = filters.maxReward;
+    }
+
+    // Build orderBy
+    const orderBy: Prisma.BountyOrderByWithRelationInput =
+      filters.sortBy === 'rewardAmount'
+        ? { rewardAmount: filters.sortOrder ?? 'desc' }
+        : { createdAt: filters.sortOrder ?? 'desc' };
+
+    const [bounties, total] = await Promise.all([
+      prisma.bounty.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        include: {
+          creator: { select: creatorSelect },
+          claimant: { select: creatorSelect },
+          _count: { select: { submissions: true, disputes: true } },
+        },
+      }),
+      prisma.bounty.count({ where }),
+    ]);
+
+    res.status(200).json({
+      data: bounties,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error('listBounties error:', error);
+    res.status(500).json({ error: 'Failed to fetch bounties' });
+  }
+}
+
 export const bountyController = {
   createBounty,
+  listBounties,
 };
