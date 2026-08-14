@@ -1,7 +1,11 @@
 import dotenv from 'dotenv';
+import app from './app';
 
 dotenv.config();
 
-const PORT = process.env.PORT ?? 3000;
+const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
-console.info(`ChainBounty backend starting on port ${PORT}...`);
+app.listen(PORT, () => {
+  console.info(`🚀 ChainBounty backend running on port ${PORT}`);
+  console.info(`   Health check: http://localhost:${PORT}/health`);
+});
