@@ -1,4 +1,5 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
+import routes from './routes';
 
 const app = express();
 
@@ -14,6 +15,9 @@ app.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// API routes
+app.use('/api/v1', routes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
