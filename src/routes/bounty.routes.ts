@@ -13,4 +13,7 @@ router.post('/', bountyValidator.validateCreateBounty, bountyController.createBo
 // GET /bounties/:id — get a single bounty by ID
 router.get('/:id', bountyController.getBountyById);
 
+// POST /bounties/:id/claim — claim a bounty
+router.post('/:id/claim', bountyController.claimBounty);
+
 export default router;

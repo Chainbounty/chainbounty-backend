@@ -175,8 +175,68 @@ async function getBountyById(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function claimBounty(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+
+    // Placeholder claimant until JWT auth lands in step 15
+    const DEV_CLAIMANT_STELLAR = 'GCLM0000000000000000000000000000000000000000000000000000';
+    const claimant = await prisma.contributor.upsert({
+      where: { stellarAddress: DEV_CLAIMANT_STELLAR },
+      update: {},
+      create: { stellarAddress: DEV_CLAIMANT_STELLAR, displayName: 'Claimant Placeholder' },
+    });
+
+    // Fetch bounty with a transaction to prevent race conditions
+    const bounty = await prisma.bounty.findUnique({ where: { id } });
+
+    if (!bounty) {
+      res.status(404).json({ error: 'Bounty not found' });
+      return;
+    }
+
+    if (bounty.status !== 'OPEN') {
+      res.status(409).json({
+        error: 'Bounty cannot be claimed',
+        detail: `Bounty is currently ${bounty.status}. Only OPEN bounties can be claimed.`,
+      });
+      return;
+    }
+
+    if (bounty.creatorId === claimant.id) {
+      res.status(409).json({ error: 'Bounty creator cannot claim their own bounty' });
+      return;
+    }
+
+    if (bounty.expiresAt && bounty.expiresAt < new Date()) {
+      res.status(409).json({ error: 'Bounty has expired and can no longer be claimed' });
+      return;
+    }
+
+    const updated = await prisma.bounty.update({
+      where: { id },
+      data: {
+        status: 'CLAIMED',
+        claimantId: claimant.id,
+        claimedAt: new Date(),
+      },
+      include: {
+        creator: { select: creatorSelect },
+        claimant: { select: creatorSelect },
+        milestones: true,
+      },
+    });
+
+    res.status(200).json({ data: updated });
+  } catch (error) {
+    console.error('claimBounty error:', error);
+    res.status(500).json({ error: 'Failed to claim bounty' });
+  }
+}
+
 export const bountyController = {
   createBounty,
   listBounties,
   getBountyById,
+  claimBounty,
 };
