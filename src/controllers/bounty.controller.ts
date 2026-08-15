@@ -317,10 +317,170 @@ async function submitBounty(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function approveBounty(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const body = req.body as { reviewNotes?: string; releaseTxHash?: string };
+
+    // Placeholder creator/maintainer until JWT auth lands in step 15
+    const DEV_STELLAR = 'GDEV0000000000000000000000000000000000000000000000000000';
+    const maintainer = await prisma.contributor.upsert({
+      where: { stellarAddress: DEV_STELLAR },
+      update: {},
+      create: { stellarAddress: DEV_STELLAR, displayName: 'Dev Placeholder' },
+    });
+
+    const bounty = await prisma.bounty.findUnique({
+      where: { id },
+      include: { submissions: { orderBy: { createdAt: 'desc' }, take: 1 } },
+    });
+
+    if (!bounty) {
+      res.status(404).json({ error: 'Bounty not found' });
+      return;
+    }
+
+    if (bounty.creatorId !== maintainer.id) {
+      res.status(403).json({ error: 'Only the bounty creator can approve submissions' });
+      return;
+    }
+
+    if (bounty.status !== 'SUBMITTED') {
+      res.status(409).json({
+        error: 'Bounty cannot be approved',
+        detail: `Bounty is currently ${bounty.status}. Only SUBMITTED bounties can be approved.`,
+      });
+      return;
+    }
+
+    const latestSubmission = bounty.submissions[0];
+
+    const [updatedBounty] = await prisma.$transaction([
+      prisma.bounty.update({
+        where: { id },
+        data: {
+          status: 'APPROVED',
+          approvedAt: new Date(),
+          releaseTxHash: body.releaseTxHash ?? null,
+        },
+        include: {
+          creator: { select: creatorSelect },
+          claimant: { select: creatorSelect },
+          milestones: true,
+        },
+      }),
+      // Stamp review notes on the latest submission if provided
+      ...(latestSubmission && body.reviewNotes
+        ? [
+            prisma.submission.update({
+              where: { id: latestSubmission.id },
+              data: { reviewNotes: body.reviewNotes.trim() },
+            }),
+          ]
+        : []),
+      // Update claimant stats
+      ...(bounty.claimantId
+        ? [
+            prisma.contributor.update({
+              where: { id: bounty.claimantId },
+              data: {
+                bountiesCompleted: { increment: 1 },
+                totalEarned: { increment: bounty.rewardAmount },
+                reputationScore: { increment: 10 },
+              },
+            }),
+          ]
+        : []),
+    ]);
+
+    res.status(200).json({ data: updatedBounty });
+  } catch (error) {
+    console.error('approveBounty error:', error);
+    res.status(500).json({ error: 'Failed to approve bounty' });
+  }
+}
+
+async function rejectBounty(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const body = req.body as { reviewNotes?: string };
+
+    if (!body.reviewNotes || body.reviewNotes.trim().length === 0) {
+      res.status(400).json({
+        error: 'Validation failed',
+        details: [{ field: 'reviewNotes', message: 'Review notes are required when rejecting a submission' }],
+      });
+      return;
+    }
+
+    // Placeholder creator/maintainer until JWT auth lands in step 15
+    const DEV_STELLAR = 'GDEV0000000000000000000000000000000000000000000000000000';
+    const maintainer = await prisma.contributor.upsert({
+      where: { stellarAddress: DEV_STELLAR },
+      update: {},
+      create: { stellarAddress: DEV_STELLAR, displayName: 'Dev Placeholder' },
+    });
+
+    const bounty = await prisma.bounty.findUnique({
+      where: { id },
+      include: { submissions: { orderBy: { createdAt: 'desc' }, take: 1 } },
+    });
+
+    if (!bounty) {
+      res.status(404).json({ error: 'Bounty not found' });
+      return;
+    }
+
+    if (bounty.creatorId !== maintainer.id) {
+      res.status(403).json({ error: 'Only the bounty creator can reject submissions' });
+      return;
+    }
+
+    if (bounty.status !== 'SUBMITTED') {
+      res.status(409).json({
+        error: 'Bounty cannot be rejected',
+        detail: `Bounty is currently ${bounty.status}. Only SUBMITTED bounties can be rejected.`,
+      });
+      return;
+    }
+
+    const latestSubmission = bounty.submissions[0];
+
+    const [updatedBounty] = await prisma.$transaction([
+      // Revert to CLAIMED so the contributor can resubmit
+      prisma.bounty.update({
+        where: { id },
+        data: { status: 'CLAIMED', submittedAt: null },
+        include: {
+          creator: { select: creatorSelect },
+          claimant: { select: creatorSelect },
+          milestones: true,
+        },
+      }),
+      // Stamp review notes on the latest submission
+      ...(latestSubmission
+        ? [
+            prisma.submission.update({
+              where: { id: latestSubmission.id },
+              data: { reviewNotes: body.reviewNotes.trim() },
+            }),
+          ]
+        : []),
+    ]);
+
+    res.status(200).json({ data: updatedBounty });
+  } catch (error) {
+    console.error('rejectBounty error:', error);
+    res.status(500).json({ error: 'Failed to reject bounty' });
+  }
+}
+
 export const bountyController = {
   createBounty,
   listBounties,
   getBountyById,
   claimBounty,
   submitBounty,
+  approveBounty,
+  rejectBounty,
 };

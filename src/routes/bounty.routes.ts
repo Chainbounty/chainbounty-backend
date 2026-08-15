@@ -19,4 +19,10 @@ router.post('/:id/claim', bountyController.claimBounty);
 // POST /bounties/:id/submit — submit work for a claimed bounty
 router.post('/:id/submit', bountyController.submitBounty);
 
+// POST /bounties/:id/approve — approve a submitted bounty
+router.post('/:id/approve', bountyController.approveBounty);
+
+// POST /bounties/:id/reject — reject a submitted bounty (reverts to CLAIMED)
+router.post('/:id/reject', bountyController.rejectBounty);
+
 export default router;
