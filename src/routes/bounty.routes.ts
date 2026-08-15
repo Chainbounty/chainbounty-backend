@@ -16,4 +16,7 @@ router.get('/:id', bountyController.getBountyById);
 // POST /bounties/:id/claim — claim a bounty
 router.post('/:id/claim', bountyController.claimBounty);
 
+// POST /bounties/:id/submit — submit work for a claimed bounty
+router.post('/:id/submit', bountyController.submitBounty);
+
 export default router;

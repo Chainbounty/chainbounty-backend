@@ -234,9 +234,93 @@ async function claimBounty(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function submitBounty(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const body = req.body as { prUrl?: string; description?: string; notes?: string };
+
+    // Validate submission body
+    if (!body.description || typeof body.description !== 'string' || body.description.trim().length === 0) {
+      res.status(400).json({ error: 'Validation failed', details: [{ field: 'description', message: 'Submission description is required' }] });
+      return;
+    }
+
+    if (body.prUrl !== undefined) {
+      try {
+        new URL(body.prUrl);
+      } catch {
+        res.status(400).json({ error: 'Validation failed', details: [{ field: 'prUrl', message: 'prUrl must be a valid URL' }] });
+        return;
+      }
+    }
+
+    // Placeholder claimant until JWT auth lands in step 15
+    const DEV_CLAIMANT_STELLAR = 'GCLM0000000000000000000000000000000000000000000000000000';
+    const claimant = await prisma.contributor.upsert({
+      where: { stellarAddress: DEV_CLAIMANT_STELLAR },
+      update: {},
+      create: { stellarAddress: DEV_CLAIMANT_STELLAR, displayName: 'Claimant Placeholder' },
+    });
+
+    const bounty = await prisma.bounty.findUnique({ where: { id } });
+
+    if (!bounty) {
+      res.status(404).json({ error: 'Bounty not found' });
+      return;
+    }
+
+    if (bounty.status !== 'CLAIMED') {
+      res.status(409).json({
+        error: 'Bounty cannot be submitted',
+        detail: `Bounty is currently ${bounty.status}. Only CLAIMED bounties can have work submitted.`,
+      });
+      return;
+    }
+
+    if (bounty.claimantId !== claimant.id) {
+      res.status(403).json({ error: 'Only the bounty claimant can submit work' });
+      return;
+    }
+
+    // Update bounty status and create submission in a transaction
+    const [updatedBounty, submission] = await prisma.$transaction([
+      prisma.bounty.update({
+        where: { id },
+        data: {
+          status: 'SUBMITTED',
+          submittedAt: new Date(),
+        },
+        include: {
+          creator: { select: creatorSelect },
+          claimant: { select: creatorSelect },
+          milestones: true,
+        },
+      }),
+      prisma.submission.create({
+        data: {
+          bountyId: id,
+          contributorId: claimant.id,
+          prUrl: body.prUrl ?? null,
+          description: body.description.trim(),
+          notes: body.notes?.trim() ?? null,
+        },
+        include: {
+          contributor: { select: creatorSelect },
+        },
+      }),
+    ]);
+
+    res.status(200).json({ data: { bounty: updatedBounty, submission } });
+  } catch (error) {
+    console.error('submitBounty error:', error);
+    res.status(500).json({ error: 'Failed to submit bounty work' });
+  }
+}
+
 export const bountyController = {
   createBounty,
   listBounties,
   getBountyById,
   claimBounty,
+  submitBounty,
 };
