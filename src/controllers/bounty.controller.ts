@@ -137,7 +137,46 @@ async function listBounties(req: Request, res: Response): Promise<void> {
   }
 }
 
+async function getBountyById(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+
+    const bounty = await prisma.bounty.findUnique({
+      where: { id },
+      include: {
+        creator: { select: creatorSelect },
+        claimant: { select: creatorSelect },
+        milestones: { orderBy: { createdAt: 'asc' } },
+        submissions: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            contributor: { select: creatorSelect },
+          },
+        },
+        disputes: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            raisedBy: { select: creatorSelect },
+          },
+        },
+        _count: { select: { submissions: true, disputes: true } },
+      },
+    });
+
+    if (!bounty) {
+      res.status(404).json({ error: 'Bounty not found' });
+      return;
+    }
+
+    res.status(200).json({ data: bounty });
+  } catch (error) {
+    console.error('getBountyById error:', error);
+    res.status(500).json({ error: 'Failed to fetch bounty' });
+  }
+}
+
 export const bountyController = {
   createBounty,
   listBounties,
+  getBountyById,
 };

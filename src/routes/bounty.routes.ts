@@ -10,4 +10,7 @@ router.get('/', bountyValidator.validateListBounties, bountyController.listBount
 // POST /bounties — create a new bounty
 router.post('/', bountyValidator.validateCreateBounty, bountyController.createBounty);
 
+// GET /bounties/:id — get a single bounty by ID
+router.get('/:id', bountyController.getBountyById);
+
 export default router;
