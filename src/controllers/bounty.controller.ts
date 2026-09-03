@@ -2,6 +2,12 @@ import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import type { CreateBountyInput, BountyFilters } from '../types/bounty';
 import { BountyDifficulty, Prisma } from '@prisma/client';
+import {
+  notifyBountyClaimed,
+  notifyBountySubmitted,
+  notifyBountyApproved,
+  notifyBountyRejected,
+} from '../lib/notificationService';
 
 // Shared creator select shape
 const creatorSelect = {
@@ -227,6 +233,14 @@ async function claimBounty(req: Request, res: Response): Promise<void> {
       },
     });
 
+    // Send notification to bounty creator
+    void notifyBountyClaimed(
+      updated.id,
+      updated.title,
+      updated.creatorId,
+      claimant.displayName ?? claimant.stellarAddress,
+    );
+
     res.status(200).json({ data: updated });
   } catch (error) {
     console.error('claimBounty error:', error);
@@ -309,6 +323,14 @@ async function submitBounty(req: Request, res: Response): Promise<void> {
         },
       }),
     ]);
+
+    // Send notification to bounty creator
+    void notifyBountySubmitted(
+      updatedBounty.id,
+      updatedBounty.title,
+      updatedBounty.creatorId,
+      claimant.displayName ?? claimant.stellarAddress,
+    );
 
     res.status(200).json({ data: { bounty: updatedBounty, submission } });
   } catch (error) {
@@ -393,6 +415,16 @@ async function approveBounty(req: Request, res: Response): Promise<void> {
         : []),
     ]);
 
+    // Send notification to claimant
+    if (bounty.claimantId) {
+      void notifyBountyApproved(
+        updatedBounty.id,
+        updatedBounty.title,
+        bounty.claimantId,
+        `${bounty.rewardAmount} ${bounty.rewardAsset}`,
+      );
+    }
+
     res.status(200).json({ data: updatedBounty });
   } catch (error) {
     console.error('approveBounty error:', error);
@@ -467,6 +499,16 @@ async function rejectBounty(req: Request, res: Response): Promise<void> {
           ]
         : []),
     ]);
+
+    // Send notification to claimant
+    if (bounty.claimantId) {
+      void notifyBountyRejected(
+        updatedBounty.id,
+        updatedBounty.title,
+        bounty.claimantId,
+        body.reviewNotes,
+      );
+    }
 
     res.status(200).json({ data: updatedBounty });
   } catch (error) {
