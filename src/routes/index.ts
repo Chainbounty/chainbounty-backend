@@ -3,6 +3,7 @@ import authRoutes from './auth.routes';
 import bountyRoutes from './bounty.routes';
 import contributorRoutes from './contributor.routes';
 import notificationRoutes from './notification.routes';
+import disputeRoutes from './dispute.routes';
 
 const router = Router();
 
@@ -10,5 +11,6 @@ router.use('/auth', authRoutes);
 router.use('/bounties', bountyRoutes);
 router.use('/contributors', contributorRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/disputes', disputeRoutes);
 
 export default router;
