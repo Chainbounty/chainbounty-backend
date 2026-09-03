@@ -1,5 +1,6 @@
 import { Horizon } from '@stellar/stellar-sdk';
 import { prisma } from './prisma';
+import { syncPendingEvents } from './eventSync';
 import type { IndexerState } from '../types/stellar';
 
 const HORIZON_URL = process.env.STELLAR_HORIZON_URL ?? 'https://horizon-testnet.stellar.org';
@@ -79,7 +80,11 @@ async function pollOperations(): Promise<void> {
     const page = await builder.call();
     const records = page.records;
 
-    if (records.length === 0) return;
+    if (records.length === 0) {
+      // No new operations, but still run event sync in case there's backlog
+      await syncPendingEvents();
+      return;
+    }
 
     // Persist each operation as a raw WebhookDelivery for the event sync layer
     for (const op of records) {
@@ -103,6 +108,9 @@ async function pollOperations(): Promise<void> {
     }
 
     console.info(`[Indexer] Indexed ${records.length} Stellar operation(s)`);
+
+    // Process pending events after indexing
+    await syncPendingEvents();
   } catch (error) {
     console.error('[Indexer] Poll error:', error);
   }

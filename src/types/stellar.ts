@@ -35,3 +35,34 @@ export interface IndexerState {
   lastPagingToken: string | null;
   lastIndexedAt: Date | null;
 }
+
+// Contract event types we care about
+export interface BountyEscrowedEvent {
+  bounty_id: string;
+  creator: string;
+  amount: string;
+  asset: string;
+}
+
+export interface BountyClaimedEvent {
+  bounty_id: string;
+  claimant: string;
+}
+
+export interface BountyReleasedEvent {
+  bounty_id: string;
+  claimant: string;
+  amount: string;
+}
+
+export interface BountyDisputedEvent {
+  bounty_id: string;
+  disputer: string;
+  reason: string;
+}
+
+export type ContractEvent =
+  | { type: 'bounty_escrowed'; data: BountyEscrowedEvent }
+  | { type: 'bounty_claimed'; data: BountyClaimedEvent }
+  | { type: 'bounty_released'; data: BountyReleasedEvent }
+  | { type: 'bounty_disputed'; data: BountyDisputedEvent };
