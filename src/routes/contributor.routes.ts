@@ -3,6 +3,9 @@ import { contributorController } from '../controllers/contributor.controller';
 
 const router = Router();
 
+// GET /contributors/leaderboard — get top contributors ranked by reputation/earnings
+router.get('/leaderboard', contributorController.getLeaderboard);
+
 // GET /contributors/:id — get full profile by ID
 router.get('/:id', contributorController.getContributorProfile);
 
