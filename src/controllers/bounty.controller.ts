@@ -8,6 +8,7 @@ import {
   notifyBountyApproved,
   notifyBountyRejected,
 } from '../lib/notificationService';
+import { recordPlatformFee } from '../lib/platformFee';
 
 // Shared creator select shape
 const creatorSelect = {
@@ -414,6 +415,14 @@ async function approveBounty(req: Request, res: Response): Promise<void> {
           ]
         : []),
     ]);
+
+    // Record platform fee
+    void recordPlatformFee(
+      updatedBounty.id,
+      bounty.rewardAmount,
+      bounty.rewardAsset,
+      body.releaseTxHash,
+    );
 
     // Send notification to claimant
     if (bounty.claimantId) {

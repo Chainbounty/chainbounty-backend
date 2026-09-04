@@ -47,6 +47,10 @@ model Bounty {
   escrowTxHash      String?
   releaseTxHash     String?
 
+  // Platform fee
+  platformFeeAmount Decimal?         @db.Decimal(20, 7)
+  platformFeePaid   Boolean          @default(false)
+
   // Relations
   creatorId         String
   creator           Contributor      @relation("CreatedBounties", fields: [creatorId], references: [id])
@@ -190,4 +194,19 @@ model WebhookDelivery {
   createdAt     DateTime  @default(now())
 
   @@index([eventType, processed])
+}
+
+model PlatformFee {
+  id            String    @id @default(cuid())
+  bountyId      String
+  amount        Decimal   @db.Decimal(20, 7)
+  asset         String    @default("XLM")
+  txHash        String?
+  collected     Boolean   @default(false)
+  collectedAt   DateTime?
+
+  createdAt     DateTime  @default(now())
+
+  @@index([collected])
+  @@index([bountyId])
 }
