@@ -68,7 +68,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chainbounty_test?schema=public
 
       - name: Run tests
-        run: npm test
+        run: npm test -- --verbose
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chainbounty_test?schema=public
           JWT_SECRET: test-secret-key

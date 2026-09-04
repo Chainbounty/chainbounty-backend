@@ -16,13 +16,22 @@ describe('Bounty CRUD Endpoints', () => {
       },
     });
 
+    // Create the DEV placeholder contributor that the bounty controllers use
+    const DEV_STELLAR = 'GDEV0000000000000000000000000000000000000000000000000000';
+    const devCreator = await prisma.contributor.upsert({
+      where: { stellarAddress: DEV_STELLAR },
+      update: {},
+      create: { stellarAddress: DEV_STELLAR, displayName: 'Dev Placeholder' },
+    });
+
     // Create a test bounty for use in tests that need an existing bounty
+    // Use the DEV placeholder as creator so approve/reject will work
     const bounty = await prisma.bounty.create({
       data: {
         title: 'Test Bounty for ID-based tests',
         description: 'This bounty is used for GET/claim/submit/approve tests',
         rewardAmount: 100,
-        creatorId: testContributor.id,
+        creatorId: devCreator.id, // Use DEV placeholder so approve/reject tests work
         status: 'OPEN',
       },
     });
@@ -209,6 +218,14 @@ describe('Bounty CRUD Endpoints', () => {
 
     it('should reject submission without description', async () => {
       // Create and claim a new bounty for this test
+      // Use the same claimant placeholder that the controller will use
+      const DEV_CLAIMANT_STELLAR = 'GCLM0000000000000000000000000000000000000000000000000000';
+      const claimant = await prisma.contributor.upsert({
+        where: { stellarAddress: DEV_CLAIMANT_STELLAR },
+        update: {},
+        create: { stellarAddress: DEV_CLAIMANT_STELLAR, displayName: 'Claimant Placeholder' },
+      });
+
       const bounty = await prisma.bounty.create({
         data: {
           title: 'Test submission validation',
@@ -216,7 +233,7 @@ describe('Bounty CRUD Endpoints', () => {
           rewardAmount: 50,
           creatorId: testContributor.id,
           status: 'CLAIMED',
-          claimantId: testContributor.id,
+          claimantId: claimant.id, // Use the same claimant as the controller
         },
       });
 
