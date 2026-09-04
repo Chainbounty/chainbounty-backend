@@ -1,4 +1,6 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 import routes from './routes';
 import webhookRoutes from './routes/webhook.routes';
 import {
@@ -49,6 +51,12 @@ app.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'ChainBounty API Docs',
+}));
 
 // Webhook routes with webhook-specific rate limiter
 app.use('/webhooks', webhookLimiter, webhookRoutes);
