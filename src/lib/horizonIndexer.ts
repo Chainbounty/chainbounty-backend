@@ -88,7 +88,6 @@ async function pollOperations(): Promise<void> {
         where: {
           source: 'stellar',
           eventType: `stellar.operation.${op.type}`,
-          payload: { path: 'id', equals: op.id },
         },
       });
 

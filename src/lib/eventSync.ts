@@ -40,7 +40,7 @@ export async function syncPendingEvents(): Promise<void> {
 }
 
 async function processOperation(
-  deliveryId: string,
+  _deliveryId: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
   const opType = payload.type as string;

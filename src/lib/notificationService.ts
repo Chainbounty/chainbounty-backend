@@ -12,7 +12,7 @@ export async function createNotification(payload: NotificationPayload): Promise<
         type: payload.type,
         title: payload.title,
         body: payload.body,
-        metadata: payload.metadata ?? null,
+        metadata: payload.metadata ? (payload.metadata as object) : undefined,
       },
     });
 
