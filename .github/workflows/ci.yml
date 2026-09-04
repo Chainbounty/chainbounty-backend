@@ -68,22 +68,6 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chainbounty_test?schema=public
 
       - name: Run tests
-        run: npm test -- --verbose --no-coverage --json --outputFile=test-results.json 2>&1 | tee test-output.log || true
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chainbounty_test?schema=public
-          JWT_SECRET: test-secret-key
-          NODE_ENV: test
-
-      - name: Display test results
-        if: always()
-        run: |
-          echo "=== Test Output ==="
-          cat test-output.log || echo "No test output file"
-          echo ""
-          echo "=== Test Results JSON ==="
-          cat test-results.json || echo "No JSON results file"
-
-      - name: Check test exit code
         run: npm test
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chainbounty_test?schema=public

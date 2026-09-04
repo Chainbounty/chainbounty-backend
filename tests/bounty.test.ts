@@ -8,42 +8,48 @@ describe('Bounty CRUD Endpoints', () => {
   let testBountyId: string;
 
   beforeAll(async () => {
-    console.log('[SETUP] Creating test contributor...');
-    // Create a test contributor
-    testContributor = await prisma.contributor.create({
-      data: {
-        stellarAddress: 'GTEST000000000000000000000000000000000000000000000000000',
-        displayName: 'Test Contributor',
-      },
-    });
-    console.log('[SETUP] Test contributor created:', testContributor.id);
+    try {
+      console.log('[SETUP] Creating test contributor...');
+      // Create a test contributor
+      testContributor = await prisma.contributor.create({
+        data: {
+          stellarAddress: 'GTEST000000000000000000000000000000000000000000000000000',
+          displayName: 'Test Contributor',
+        },
+      });
+      console.log('[SETUP] Test contributor created:', testContributor.id);
 
-    // Create the DEV placeholder contributor that the bounty controllers use
-    const DEV_STELLAR = 'GDEV0000000000000000000000000000000000000000000000000000';
-    console.log('[SETUP] Creating/fetching DEV placeholder...');
-    const devCreator = await prisma.contributor.upsert({
-      where: { stellarAddress: DEV_STELLAR },
-      update: {},
-      create: { stellarAddress: DEV_STELLAR, displayName: 'Dev Placeholder' },
-    });
-    console.log('[SETUP] DEV placeholder ready:', devCreator.id);
+      // Create the DEV placeholder contributor that the bounty controllers use
+      const DEV_STELLAR = 'GDEV0000000000000000000000000000000000000000000000000000';
+      console.log('[SETUP] Creating/fetching DEV placeholder...');
+      const devCreator = await prisma.contributor.upsert({
+        where: { stellarAddress: DEV_STELLAR },
+        update: {},
+        create: { stellarAddress: DEV_STELLAR, displayName: 'Dev Placeholder' },
+      });
+      console.log('[SETUP] DEV placeholder ready:', devCreator.id);
 
-    // Create a test bounty for use in tests that need an existing bounty
-    // Use the DEV placeholder as creator so approve/reject will work
-    console.log('[SETUP] Creating test bounty...');
-    const bounty = await prisma.bounty.create({
-      data: {
-        title: 'Test Bounty for ID-based tests',
-        description: 'This bounty is used for GET/claim/submit/approve tests',
-        rewardAmount: 100,
-        creatorId: devCreator.id, // Use DEV placeholder so approve/reject tests work
-        status: 'OPEN',
-      },
-    });
-    testBountyId = bounty.id;
-    console.log('[SETUP] Test bounty created with ID:', testBountyId);
-    console.log('[SETUP] Bounty status:', bounty.status);
-    console.log('[SETUP] Bounty creator:', bounty.creatorId);
+      // Create a test bounty for use in tests that need an existing bounty
+      // Use the DEV placeholder as creator so approve/reject will work
+      console.log('[SETUP] Creating test bounty...');
+      const bounty = await prisma.bounty.create({
+        data: {
+          title: 'Test Bounty for ID-based tests',
+          description: 'This bounty is used for GET/claim/submit/approve tests',
+          rewardAmount: 100,
+          creatorId: devCreator.id, // Use DEV placeholder so approve/reject tests work
+          status: 'OPEN',
+        },
+      });
+      testBountyId = bounty.id;
+      console.log('[SETUP] Test bounty created with ID:', testBountyId);
+      console.log('[SETUP] Bounty status:', bounty.status);
+      console.log('[SETUP] Bounty creator:', bounty.creatorId);
+      console.log('[SETUP] beforeAll completed successfully!');
+    } catch (error) {
+      console.error('[SETUP] FATAL ERROR in beforeAll:', error);
+      throw error; // Re-throw to fail the test suite
+    }
   });
 
   afterAll(async () => {
