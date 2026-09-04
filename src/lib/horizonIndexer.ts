@@ -8,7 +8,7 @@ const CONTRACT_ADDRESS = process.env.SOROBAN_CONTRACT_ADDRESS ?? '';
 const POLL_INTERVAL_MS = parseInt(process.env.INDEXER_POLL_INTERVAL_MS ?? '15000', 10);
 
 // In-memory cursor; persisted to DB via WebhookDelivery for replay
-let indexerState: IndexerState = {
+const indexerState: IndexerState = {
   lastPagingToken: null,
   lastIndexedAt: null,
 };
@@ -67,11 +67,7 @@ async function pollOperations(): Promise<void> {
   try {
     const server = getServer();
 
-    let builder = server
-      .operations()
-      .forAccount(CONTRACT_ADDRESS)
-      .order('asc')
-      .limit(50);
+    let builder = server.operations().forAccount(CONTRACT_ADDRESS).order('asc').limit(50);
 
     if (indexerState.lastPagingToken) {
       builder = builder.cursor(indexerState.lastPagingToken);
@@ -89,7 +85,11 @@ async function pollOperations(): Promise<void> {
     // Persist each operation as a raw WebhookDelivery for the event sync layer
     for (const op of records) {
       const alreadyStored = await prisma.webhookDelivery.findFirst({
-        where: { source: 'stellar', eventType: `stellar.operation.${op.type}`, payload: { path: 'id', equals: op.id } },
+        where: {
+          source: 'stellar',
+          eventType: `stellar.operation.${op.type}`,
+          payload: { path: 'id', equals: op.id },
+        },
       });
 
       if (!alreadyStored) {

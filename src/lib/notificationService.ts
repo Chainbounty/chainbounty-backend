@@ -29,10 +29,7 @@ export async function createNotification(payload: NotificationPayload): Promise<
  * Delivers a notification via HTTP webhook to external services.
  * In production, you'd fetch the recipient's webhook URL from their profile settings.
  */
-async function deliverWebhook(
-  notificationId: string,
-  payload: NotificationPayload,
-): Promise<void> {
+async function deliverWebhook(notificationId: string, payload: NotificationPayload): Promise<void> {
   const webhookUrl = process.env.NOTIFICATION_WEBHOOK_URL;
 
   if (!webhookUrl) {

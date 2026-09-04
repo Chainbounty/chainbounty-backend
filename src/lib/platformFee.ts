@@ -7,7 +7,8 @@ const PLATFORM_FEE_PERCENTAGE = parseFloat(process.env.PLATFORM_FEE_PERCENTAGE ?
  * Calculates the platform fee for a bounty reward amount.
  */
 export function calculatePlatformFee(rewardAmount: number | Decimal): number {
-  const amount = typeof rewardAmount === 'number' ? rewardAmount : parseFloat(rewardAmount.toString());
+  const amount =
+    typeof rewardAmount === 'number' ? rewardAmount : parseFloat(rewardAmount.toString());
   return (amount * PLATFORM_FEE_PERCENTAGE) / 100;
 }
 

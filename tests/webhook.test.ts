@@ -7,7 +7,7 @@ import './setup';
 
 describe('GitHub Webhook Handler', () => {
   const WEBHOOK_SECRET = 'test-webhook-secret';
-  let testBounty: { id: string; githubIssueUrl: string };
+  let testBounty: { id: string; githubIssueUrl: string; githubIssueNumber: number | null };
   let testContributor: { id: string };
 
   beforeAll(async () => {

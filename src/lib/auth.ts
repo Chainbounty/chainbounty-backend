@@ -38,12 +38,12 @@ export function verifyStellarSignature(
  * Signs a JWT for an authenticated contributor.
  */
 export function signToken(contributorId: string, stellarAddress: string): string {
-  const payload: Omit<AuthTokenPayload, 'iat' | 'exp'> = {
+  const payload = {
     contributorId,
     stellarAddress,
   };
 
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
 }
 
 /**

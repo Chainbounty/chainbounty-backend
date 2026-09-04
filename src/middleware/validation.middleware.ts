@@ -5,13 +5,13 @@ import type { Request, Response, NextFunction } from 'express';
  */
 export function sanitizeInput(req: Request, _res: Response, next: NextFunction): void {
   if (req.body && typeof req.body === 'object') {
-    sanitizeObject(req.body);
+    sanitizeObject(req.body as Record<string, unknown>);
   }
   if (req.query && typeof req.query === 'object') {
     sanitizeObject(req.query as Record<string, unknown>);
   }
   if (req.params && typeof req.params === 'object') {
-    sanitizeObject(req.params);
+    sanitizeObject(req.params as Record<string, unknown>);
   }
   next();
 }
@@ -118,7 +118,7 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   // Content Security Policy (basic)
-  res.setHeader("Content-Security-Policy", "default-src 'self'");
+  res.setHeader('Content-Security-Policy', "default-src 'self'");
 
   next();
 }

@@ -186,10 +186,7 @@ function validateListBounties(req: Request, res: Response, next: NextFunction): 
   }
 
   // sortOrder
-  if (
-    query.sortOrder !== undefined &&
-    !['asc', 'desc'].includes(query.sortOrder as string)
-  ) {
+  if (query.sortOrder !== undefined && !['asc', 'desc'].includes(query.sortOrder as string)) {
     errors.push({ field: 'sortOrder', message: 'sortOrder must be asc or desc' });
   }
 

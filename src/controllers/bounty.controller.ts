@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import type { CreateBountyInput, BountyFilters } from '../types/bounty';
-import { BountyDifficulty, Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
+import { BountyDifficulty } from '@prisma/client';
 import {
   notifyBountyClaimed,
   notifyBountySubmitted,
@@ -255,8 +256,15 @@ async function submitBounty(req: Request, res: Response): Promise<void> {
     const body = req.body as { prUrl?: string; description?: string; notes?: string };
 
     // Validate submission body
-    if (!body.description || typeof body.description !== 'string' || body.description.trim().length === 0) {
-      res.status(400).json({ error: 'Validation failed', details: [{ field: 'description', message: 'Submission description is required' }] });
+    if (
+      !body.description ||
+      typeof body.description !== 'string' ||
+      body.description.trim().length === 0
+    ) {
+      res.status(400).json({
+        error: 'Validation failed',
+        details: [{ field: 'description', message: 'Submission description is required' }],
+      });
       return;
     }
 
@@ -264,7 +272,10 @@ async function submitBounty(req: Request, res: Response): Promise<void> {
       try {
         new URL(body.prUrl);
       } catch {
-        res.status(400).json({ error: 'Validation failed', details: [{ field: 'prUrl', message: 'prUrl must be a valid URL' }] });
+        res.status(400).json({
+          error: 'Validation failed',
+          details: [{ field: 'prUrl', message: 'prUrl must be a valid URL' }],
+        });
         return;
       }
     }
@@ -430,7 +441,7 @@ async function approveBounty(req: Request, res: Response): Promise<void> {
         updatedBounty.id,
         updatedBounty.title,
         bounty.claimantId,
-        `${bounty.rewardAmount} ${bounty.rewardAsset}`,
+        `${bounty.rewardAmount.toString()} ${bounty.rewardAsset}`,
       );
     }
 
@@ -449,7 +460,12 @@ async function rejectBounty(req: Request, res: Response): Promise<void> {
     if (!body.reviewNotes || body.reviewNotes.trim().length === 0) {
       res.status(400).json({
         error: 'Validation failed',
-        details: [{ field: 'reviewNotes', message: 'Review notes are required when rejecting a submission' }],
+        details: [
+          {
+            field: 'reviewNotes',
+            message: 'Review notes are required when rejecting a submission',
+          },
+        ],
       });
       return;
     }

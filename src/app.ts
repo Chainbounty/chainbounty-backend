@@ -22,17 +22,15 @@ const app = express();
 app.use(securityHeaders);
 
 // Capture raw body for webhook signature verification before JSON parsing
-app.use(
-  (req: Request & { rawBody?: Buffer }, _res: Response, next: NextFunction): void => {
-    const chunks: Buffer[] = [];
-    req.on('data', (chunk: Buffer) => chunks.push(chunk));
-    req.on('end', () => {
-      req.rawBody = Buffer.concat(chunks);
-      next();
-    });
-    req.on('error', next);
-  },
-);
+app.use((req: Request & { rawBody?: Buffer }, _res: Response, next: NextFunction): void => {
+  const chunks: Buffer[] = [];
+  req.on('data', (chunk: Buffer) => chunks.push(chunk));
+  req.on('end', () => {
+    req.rawBody = Buffer.concat(chunks);
+    next();
+  });
+  req.on('error', next);
+});
 
 // JSON + form parsing with size limits
 app.use(express.json({ limit: '1mb' }));
@@ -53,10 +51,14 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 // API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'ChainBounty API Docs',
-}));
+app.use(
+  '/api-docs',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'ChainBounty API Docs',
+  }),
+);
 
 // Webhook routes with webhook-specific rate limiter
 app.use('/webhooks', webhookLimiter, webhookRoutes);

@@ -47,7 +47,15 @@ const options: swaggerJsdoc.Options = {
             rewardAsset: { type: 'string', example: 'XLM' },
             status: {
               type: 'string',
-              enum: ['OPEN', 'CLAIMED', 'SUBMITTED', 'APPROVED', 'REJECTED', 'CANCELLED', 'DISPUTED'],
+              enum: [
+                'OPEN',
+                'CLAIMED',
+                'SUBMITTED',
+                'APPROVED',
+                'REJECTED',
+                'CANCELLED',
+                'DISPUTED',
+              ],
               example: 'OPEN',
             },
             difficulty: {

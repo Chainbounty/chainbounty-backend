@@ -203,7 +203,8 @@ async function getAllDisputes(req: AuthRequest, res: Response): Promise<void> {
   try {
     const query = req.query as Record<string, string | undefined>;
 
-    const resolved = query.resolved === 'true' ? true : query.resolved === 'false' ? false : undefined;
+    const resolved =
+      query.resolved === 'true' ? true : query.resolved === 'false' ? false : undefined;
     const limit = query.limit ? parseInt(query.limit, 10) : 20;
     const page = query.page ? parseInt(query.page, 10) : 1;
 

@@ -11,10 +11,7 @@ export function verifyGitHubSignature(
 ): boolean {
   if (!signature) return false;
 
-  const expected = `sha256=${crypto
-    .createHmac('sha256', secret)
-    .update(rawBody)
-    .digest('hex')}`;
+  const expected = `sha256=${crypto.createHmac('sha256', secret).update(rawBody).digest('hex')}`;
 
   // Constant-time comparison to prevent timing attacks
   try {
