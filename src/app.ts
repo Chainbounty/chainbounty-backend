@@ -23,14 +23,21 @@ app.use(securityHeaders);
 
 // JSON + form parsing with size limits
 // Use verify callback to capture raw body for webhook signature verification
-app.use(express.json({ 
-  limit: '1mb',
-  verify: (req: Request & { rawBody?: Buffer }, _res: Response, buf: Buffer, _encoding: string) => {
-    if (buf && buf.length) {
-      req.rawBody = buf;
-    }
-  }
-}));
+app.use(
+  express.json({
+    limit: '1mb',
+    verify: (
+      req: Request & { rawBody?: Buffer },
+      _res: Response,
+      buf: Buffer,
+      _encoding: string,
+    ) => {
+      if (buf && buf.length) {
+        req.rawBody = buf;
+      }
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Request validation

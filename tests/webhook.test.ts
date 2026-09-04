@@ -13,12 +13,8 @@ describe('GitHub Webhook Handler', () => {
     githubIssueNumber: number | null;
   };
   let testContributor: { id: string };
-  let server: any;
 
   beforeAll(async () => {
-    // Start server
-    server = app.listen(0); // Use random port
-    
     process.env.GITHUB_WEBHOOK_SECRET = WEBHOOK_SECRET;
 
     testContributor = await prisma.contributor.create({
@@ -44,19 +40,7 @@ describe('GitHub Webhook Handler', () => {
   });
 
   afterAll(async () => {
-    // Close server first
-    if (server) {
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Server close timeout')), 5000);
-        server.close((err: Error | undefined) => {
-          clearTimeout(timeout);
-          if (err) reject(err);
-          else resolve(undefined);
-        });
-      }).catch(err => console.error('Server close error:', err));
-    }
-    
-    // Then clean up test data
+    // Clean up test data
     try {
       await prisma.webhookDelivery.deleteMany({});
       await prisma.bounty.deleteMany({});

@@ -6,12 +6,8 @@ import './setup';
 describe('Bounty CRUD Endpoints', () => {
   let testContributor: { id: string; stellarAddress: string };
   let testBountyId: string;
-  let server: any;
 
   beforeAll(async () => {
-    // Start server
-    server = app.listen(0); // Use random port
-    
     // Create a test contributor
     testContributor = await prisma.contributor.create({
       data: {
@@ -22,19 +18,7 @@ describe('Bounty CRUD Endpoints', () => {
   });
 
   afterAll(async () => {
-    // Close server first
-    if (server) {
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Server close timeout')), 5000);
-        server.close((err: Error | undefined) => {
-          clearTimeout(timeout);
-          if (err) reject(err);
-          else resolve(undefined);
-        });
-      }).catch(err => console.error('Server close error:', err));
-    }
-    
-    // Then clean up test data
+    // Clean up test data
     try {
       await prisma.bounty.deleteMany({});
       await prisma.contributor.deleteMany({});
