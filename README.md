@@ -1,5 +1,8 @@
 # ChainBounty Backend
 
+[![CI](https://github.com/chainbounty/chainbounty-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/chainbounty/chainbounty-backend/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Decentralized bounty board backend for open source projects. Integrates with GitHub issues and Stellar/Soroban smart contracts.
 
 ## Features
@@ -224,3 +227,15 @@ chainbounty-backend/
 ## License
 
 MIT
+
+## Documentation
+
+- [Environment Variables](./ENVIRONMENT.md) - Complete environment configuration guide
+- [Contributing Guide](./CONTRIBUTING.md) - How to contribute to the project
+- [API Documentation](http://localhost:3000/api-docs) - Interactive API docs (when server is running)
+
+## Support
+
+- 📖 [Documentation](./README.md)
+- 🐛 [Report Issues](https://github.com/chainbounty/chainbounty-backend/issues)
+- 💬 [Discussions](https://github.com/chainbounty/chainbounty-backend/discussions)
