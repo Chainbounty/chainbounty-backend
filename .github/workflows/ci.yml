@@ -68,20 +68,24 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chainbounty_test?schema=public
 
       - name: Run tests
-        run: |
-          npm test 2>&1 | tee test-output.txt
-          exit ${PIPESTATUS[0]}
+        id: test
+        continue-on-error: true
+        run: npm test 2>&1 | tee test-output.txt
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chainbounty_test?schema=public
           JWT_SECRET: test-secret-key
           NODE_ENV: test
 
-      - name: Show test output on failure
-        if: failure()
+      - name: Show full test output
+        if: steps.test.outcome == 'failure'
         run: |
-          echo "==================== FULL TEST OUTPUT ===================="
-          cat test-output.txt || echo "No test output file found"
-          echo "========================================================="
+          echo "::group::Full Test Output"
+          cat test-output.txt
+          echo "::endgroup::"
+          
+      - name: Fail if tests failed
+        if: steps.test.outcome == 'failure'
+        run: exit 1
 
       - name: Upload test logs on failure
         if: failure()
