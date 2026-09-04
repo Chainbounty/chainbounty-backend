@@ -25,14 +25,11 @@ beforeAll(async () => {
   }
 });
 
-// Clean between test suites
-afterEach(async () => {
-  // Don't clean after every test, just after each suite
-});
-
 // Close database connection after all tests
 afterAll(async () => {
   try {
+    // Give time for any pending operations to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
     await prisma.$disconnect();
   } catch (error) {
     console.error('Failed to disconnect:', error);

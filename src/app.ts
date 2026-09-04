@@ -21,19 +21,16 @@ const app = express();
 // Security headers
 app.use(securityHeaders);
 
-// Capture raw body for webhook signature verification before JSON parsing
-app.use((req: Request & { rawBody?: Buffer }, _res: Response, next: NextFunction): void => {
-  const chunks: Buffer[] = [];
-  req.on('data', (chunk: Buffer) => chunks.push(chunk));
-  req.on('end', () => {
-    req.rawBody = Buffer.concat(chunks);
-    next();
-  });
-  req.on('error', next);
-});
-
 // JSON + form parsing with size limits
-app.use(express.json({ limit: '1mb' }));
+// Use verify callback to capture raw body for webhook signature verification
+app.use(express.json({ 
+  limit: '1mb',
+  verify: (req: Request & { rawBody?: Buffer }, _res: Response, buf: Buffer, _encoding: string) => {
+    if (buf && buf.length) {
+      req.rawBody = buf;
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // Request validation
