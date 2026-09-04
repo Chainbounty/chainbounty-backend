@@ -186,12 +186,19 @@ describe('Bounty CRUD Endpoints', () => {
   describe('GET /api/v1/bounties/:id', () => {
     it('should return a single bounty by ID', async () => {
       if (!testBountyId) {
+        console.error('CRITICAL: testBountyId is undefined!');
+        console.error('This means beforeAll() failed to create the test bounty');
         throw new Error('testBountyId is not set - beforeAll may have failed');
       }
+      
+      console.log('Attempting to GET bounty with ID:', testBountyId);
       
       const response = await request(app)
         .get(`/api/v1/bounties/${testBountyId}`)
         .expect(200);
+
+      console.log('GET response status:', response.status);
+      console.log('GET response body:', JSON.stringify(response.body, null, 2));
 
       expect(response.body.data.id).toBe(testBountyId);
       expect(response.body.data).toHaveProperty('creator');
