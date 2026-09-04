@@ -17,6 +17,16 @@ describe('Bounty CRUD Endpoints', () => {
     });
   });
 
+  afterAll(async () => {
+    // Clean up test data
+    try {
+      await prisma.bounty.deleteMany({});
+      await prisma.contributor.deleteMany({});
+    } catch (error) {
+      console.error('Cleanup error:', error);
+    }
+  });
+
   describe('POST /api/v1/bounties', () => {
     it('should create a new bounty with valid data', async () => {
       const response = await request(app)

@@ -39,6 +39,17 @@ describe('GitHub Webhook Handler', () => {
     });
   });
 
+  afterAll(async () => {
+    // Clean up test data
+    try {
+      await prisma.webhookDelivery.deleteMany({});
+      await prisma.bounty.deleteMany({});
+      await prisma.contributor.deleteMany({});
+    } catch (error) {
+      console.error('Cleanup error:', error);
+    }
+  });
+
   function signPayload(payload: string): string {
     return `sha256=${crypto.createHmac('sha256', WEBHOOK_SECRET).update(payload).digest('hex')}`;
   }
