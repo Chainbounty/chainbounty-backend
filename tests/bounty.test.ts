@@ -165,6 +165,10 @@ describe('Bounty CRUD Endpoints', () => {
 
   describe('GET /api/v1/bounties/:id', () => {
     it('should return a single bounty by ID', async () => {
+      if (!testBountyId) {
+        throw new Error('testBountyId is not set - beforeAll may have failed');
+      }
+      
       const response = await request(app)
         .get(`/api/v1/bounties/${testBountyId}`)
         .expect(200);
@@ -183,6 +187,10 @@ describe('Bounty CRUD Endpoints', () => {
 
   describe('POST /api/v1/bounties/:id/claim', () => {
     it('should claim an open bounty', async () => {
+      if (!testBountyId) {
+        throw new Error('testBountyId is not set - beforeAll may have failed');
+      }
+      
       const response = await request(app)
         .post(`/api/v1/bounties/${testBountyId}/claim`)
         .expect(200);
@@ -193,6 +201,10 @@ describe('Bounty CRUD Endpoints', () => {
     });
 
     it('should reject claiming an already claimed bounty', async () => {
+      if (!testBountyId) {
+        throw new Error('testBountyId is not set - beforeAll may have failed');
+      }
+      
       const response = await request(app)
         .post(`/api/v1/bounties/${testBountyId}/claim`)
         .expect(409);
@@ -203,6 +215,10 @@ describe('Bounty CRUD Endpoints', () => {
 
   describe('POST /api/v1/bounties/:id/submit', () => {
     it('should submit work for a claimed bounty', async () => {
+      if (!testBountyId) {
+        throw new Error('testBountyId is not set - beforeAll may have failed');
+      }
+      
       const response = await request(app)
         .post(`/api/v1/bounties/${testBountyId}/submit`)
         .send({
@@ -246,6 +262,10 @@ describe('Bounty CRUD Endpoints', () => {
 
   describe('POST /api/v1/bounties/:id/approve', () => {
     it('should approve a submitted bounty', async () => {
+      if (!testBountyId) {
+        throw new Error('testBountyId is not set - beforeAll may have failed');
+      }
+      
       const response = await request(app)
         .post(`/api/v1/bounties/${testBountyId}/approve`)
         .send({
