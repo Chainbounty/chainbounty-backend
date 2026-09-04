@@ -7,7 +7,11 @@ import './setup';
 
 describe('GitHub Webhook Handler', () => {
   const WEBHOOK_SECRET = 'test-webhook-secret';
-  let testBounty: { id: string; githubIssueUrl: string; githubIssueNumber: number | null };
+  let testBounty: {
+    id: string;
+    githubIssueUrl: string | null;
+    githubIssueNumber: number | null;
+  };
   let testContributor: { id: string };
 
   beforeAll(async () => {
@@ -125,14 +129,14 @@ describe('GitHub Webhook Handler', () => {
       const payload: Partial<GitHubIssueEvent> = {
         action: 'closed',
         issue: {
-          html_url: testBounty.githubIssueUrl,
+          html_url: testBounty.githubIssueUrl!,
           number: testBounty.githubIssueNumber!,
           labels: [],
-        } as GitHubIssueEvent['issue'],
+        } as unknown as GitHubIssueEvent['issue'],
         repository: {
           owner: { login: 'test' },
           name: 'repo',
-        } as GitHubIssueEvent['repository'],
+        } as unknown as GitHubIssueEvent['repository'],
       };
 
       const payloadString = JSON.stringify(payload);
@@ -159,17 +163,17 @@ describe('GitHub Webhook Handler', () => {
       const payload: Partial<GitHubIssueEvent> = {
         action: 'labeled',
         issue: {
-          html_url: testBounty.githubIssueUrl,
+          html_url: testBounty.githubIssueUrl!,
           number: testBounty.githubIssueNumber!,
           labels: [
             { id: 1, name: 'bounty:open', color: 'green' },
             { id: 2, name: 'good first issue', color: 'blue' },
           ],
-        } as GitHubIssueEvent['issue'],
+        } as unknown as GitHubIssueEvent['issue'],
         repository: {
           owner: { login: 'test' },
           name: 'repo',
-        } as GitHubIssueEvent['repository'],
+        } as unknown as GitHubIssueEvent['repository'],
         label: { id: 2, name: 'good first issue', color: 'blue' },
       };
 

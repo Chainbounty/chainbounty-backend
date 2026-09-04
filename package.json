@@ -19,7 +19,12 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
-  "keywords": ["bounty", "blockchain", "stellar", "open-source"],
+  "keywords": [
+    "bounty",
+    "blockchain",
+    "stellar",
+    "open-source"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
