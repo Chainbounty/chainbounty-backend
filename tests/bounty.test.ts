@@ -47,8 +47,14 @@ describe('Bounty CRUD Endpoints', () => {
   });
 
   afterAll(async () => {
-    // Clean up test data
+    // Clean up test data in correct order (children before parents)
     try {
+      // Delete child records first to avoid foreign key constraint violations
+      await prisma.milestone.deleteMany({});
+      await prisma.submission.deleteMany({});
+      await prisma.dispute.deleteMany({});
+      
+      // Then delete parent records
       await prisma.bounty.deleteMany({});
       await prisma.contributor.deleteMany({});
     } catch (error) {
