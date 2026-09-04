@@ -107,7 +107,8 @@ describe('GitHub Webhook Handler', () => {
         .set('X-Hub-Signature-256', signature)
         .set('X-GitHub-Event', 'issues')
         .set('X-GitHub-Delivery', 'test-delivery-123')
-        .send(payload)
+        .set('Content-Type', 'application/json')
+        .send(payloadString)
         .expect(200);
 
       expect(response.body.message).toBe('Webhook processed');
@@ -157,7 +158,8 @@ describe('GitHub Webhook Handler', () => {
         .post('/webhooks/github')
         .set('X-Hub-Signature-256', signature)
         .set('X-GitHub-Event', 'issues')
-        .send(payload)
+        .set('Content-Type', 'application/json')
+        .send(payloadString)
         .expect(200);
 
       const updated = await prisma.bounty.findUnique({ where: { id: testBounty.id } });
@@ -195,7 +197,8 @@ describe('GitHub Webhook Handler', () => {
         .post('/webhooks/github')
         .set('X-Hub-Signature-256', signature)
         .set('X-GitHub-Event', 'issues')
-        .send(payload)
+        .set('Content-Type', 'application/json')
+        .send(payloadString)
         .expect(200);
 
       const updated = await prisma.bounty.findUnique({ where: { id: testBounty.id } });
@@ -212,7 +215,8 @@ describe('GitHub Webhook Handler', () => {
         .post('/webhooks/github')
         .set('X-Hub-Signature-256', signature)
         .set('X-GitHub-Event', 'push')
-        .send(payload)
+        .set('Content-Type', 'application/json')
+        .send(payloadString)
         .expect(200);
 
       expect(response.body.message).toContain('ignored');
