@@ -125,6 +125,8 @@ npm run test:watch
 npm run test:coverage
 ```
 
+**Note:** Integration tests require a running PostgreSQL database. Unit tests (labelSync, auth, platformFee) run without database dependencies.
+
 ## Database Management
 
 ### Prisma Studio (GUI)
@@ -200,6 +202,7 @@ INDEXER_POLL_INTERVAL_MS=15000
 ```
 chainbounty-backend/
 ├── prisma/
+│   ├── migrations/            # Database migrations
 │   └── schema.prisma          # Database schema
 ├── src/
 │   ├── controllers/           # Request handlers
@@ -224,10 +227,6 @@ chainbounty-backend/
 - `npm run lint` - Lint code
 - `npm run format` - Format code with Prettier
 
-## License
-
-MIT
-
 ## Documentation
 
 - [Environment Variables](./ENVIRONMENT.md) - Complete environment configuration guide
@@ -239,3 +238,7 @@ MIT
 - 📖 [Documentation](./README.md)
 - 🐛 [Report Issues](https://github.com/chainbounty/chainbounty-backend/issues)
 - 💬 [Discussions](https://github.com/chainbounty/chainbounty-backend/discussions)
+
+## License
+
+MIT
