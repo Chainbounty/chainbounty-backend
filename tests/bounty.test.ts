@@ -15,6 +15,18 @@ describe('Bounty CRUD Endpoints', () => {
         displayName: 'Test Contributor',
       },
     });
+
+    // Create a test bounty for use in tests that need an existing bounty
+    const bounty = await prisma.bounty.create({
+      data: {
+        title: 'Test Bounty for ID-based tests',
+        description: 'This bounty is used for GET/claim/submit/approve tests',
+        rewardAmount: 100,
+        creatorId: testContributor.id,
+        status: 'OPEN',
+      },
+    });
+    testBountyId = bounty.id;
   });
 
   afterAll(async () => {
@@ -44,8 +56,6 @@ describe('Bounty CRUD Endpoints', () => {
       expect(response.body.data.title).toBe('Fix login bug');
       expect(response.body.data.status).toBe('OPEN');
       expect(response.body.data.rewardAmount).toBe('100');
-
-      testBountyId = response.body.data.id;
     });
 
     it('should reject bounty creation with missing title', async () => {
