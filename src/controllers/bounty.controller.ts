@@ -10,6 +10,7 @@ import {
   notifyBountyRejected,
 } from '../lib/notificationService';
 import { recordPlatformFee } from '../lib/platformFee';
+import { isValidStellarAddress } from '../validators/stellar.validator';
 
 // Shared creator select shape
 const creatorSelect = {
@@ -26,10 +27,11 @@ async function createBounty(req: Request, res: Response): Promise<void> {
 
     // Placeholder creator until JWT auth lands in step 15
     const DEV_STELLAR = 'GDEV0000000000000000000000000000000000000000000000000000';
+    const creatorStellarAddress = body.creatorAddress || body.stellarAddress || DEV_STELLAR;
     const creator = await prisma.contributor.upsert({
-      where: { stellarAddress: DEV_STELLAR },
+      where: { stellarAddress: creatorStellarAddress },
       update: {},
-      create: { stellarAddress: DEV_STELLAR, displayName: 'Dev Placeholder' },
+      create: { stellarAddress: creatorStellarAddress, displayName: 'Dev Placeholder' },
     });
 
     const bounty = await prisma.bounty.create({
@@ -79,6 +81,8 @@ async function listBounties(req: Request, res: Response): Promise<void> {
       difficulty: query.difficulty as BountyFilters['difficulty'],
       creatorId: query.creatorId,
       claimantId: query.claimantId,
+      creatorAddress: query.creatorAddress,
+      claimantAddress: query.claimantAddress,
       githubRepoOwner: query.githubRepoOwner,
       githubRepoName: query.githubRepoName,
       minReward: query.minReward !== undefined ? Number(query.minReward) : undefined,
@@ -99,6 +103,8 @@ async function listBounties(req: Request, res: Response): Promise<void> {
     if (filters.difficulty) where.difficulty = filters.difficulty;
     if (filters.creatorId) where.creatorId = filters.creatorId;
     if (filters.claimantId) where.claimantId = filters.claimantId;
+    if (filters.creatorAddress) where.creator = { stellarAddress: filters.creatorAddress };
+    if (filters.claimantAddress) where.claimant = { stellarAddress: filters.claimantAddress };
     if (filters.githubRepoOwner) where.githubRepoOwner = filters.githubRepoOwner;
     if (filters.githubRepoName) where.githubRepoName = filters.githubRepoName;
     if (filters.minReward !== undefined || filters.maxReward !== undefined) {
@@ -186,13 +192,33 @@ async function getBountyById(req: Request, res: Response): Promise<void> {
 async function claimBounty(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
+    const body = (req.body ?? {}) as {
+      claimantAddress?: unknown;
+      stellarAddress?: unknown;
+    };
+    const claimantAddress: unknown = body.claimantAddress ?? body.stellarAddress;
+    if (claimantAddress !== undefined) {
+      if (typeof claimantAddress !== 'string' || !isValidStellarAddress(claimantAddress)) {
+        res.status(400).json({
+          error: 'Validation failed',
+          details: [
+            {
+              field: 'claimantAddress',
+              message: 'Invalid Stellar address format (must be 56 characters, starting with G)',
+            },
+          ],
+        });
+        return;
+      }
+    }
 
-    // Placeholder claimant until JWT auth lands in step 15
     const DEV_CLAIMANT_STELLAR = 'GCLM0000000000000000000000000000000000000000000000000000';
+    const claimantStellar: string =
+      typeof claimantAddress === 'string' ? claimantAddress : DEV_CLAIMANT_STELLAR;
     const claimant = await prisma.contributor.upsert({
-      where: { stellarAddress: DEV_CLAIMANT_STELLAR },
+      where: { stellarAddress: claimantStellar },
       update: {},
-      create: { stellarAddress: DEV_CLAIMANT_STELLAR, displayName: 'Claimant Placeholder' },
+      create: { stellarAddress: claimantStellar, displayName: 'Claimant Placeholder' },
     });
 
     // Fetch bounty with a transaction to prevent race conditions

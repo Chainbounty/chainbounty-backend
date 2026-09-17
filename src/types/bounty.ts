@@ -11,6 +11,8 @@ export interface CreateBountyInput {
   githubRepoOwner?: string;
   githubRepoName?: string;
   contractAddress?: string;
+  creatorAddress?: string;
+  stellarAddress?: string;
   expiresAt?: string;
   milestones?: Array<{
     title: string;
@@ -24,6 +26,8 @@ export interface BountyFilters {
   difficulty?: BountyDifficulty;
   creatorId?: string;
   claimantId?: string;
+  creatorAddress?: string;
+  claimantAddress?: string;
   githubRepoOwner?: string;
   githubRepoName?: string;
   minReward?: number;

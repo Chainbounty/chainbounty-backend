@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { isValidStellarAddress } from '../validators/stellar.validator';
 
 async function getContributorProfile(req: Request, res: Response): Promise<void> {
   try {
@@ -60,6 +61,19 @@ async function getContributorByAddress(req: Request, res: Response): Promise<voi
   try {
     const { address } = req.params;
 
+    if (!isValidStellarAddress(address)) {
+      res.status(400).json({
+        error: 'Validation failed',
+        details: [
+          {
+            field: 'address',
+            message: 'Invalid Stellar address format (must be 56 characters, starting with G)',
+          },
+        ],
+      });
+      return;
+    }
+
     const contributor = await prisma.contributor.findUnique({
       where: { stellarAddress: address },
       include: {
@@ -83,6 +97,59 @@ async function getContributorByAddress(req: Request, res: Response): Promise<voi
   } catch (error) {
     console.error('getContributorByAddress error:', error);
     res.status(500).json({ error: 'Failed to fetch contributor' });
+  }
+}
+
+async function createContributor(req: Request, res: Response): Promise<void> {
+  try {
+    const { stellarAddress, displayName, githubUsername } = req.body as {
+      stellarAddress?: string;
+      displayName?: string;
+      githubUsername?: string;
+    };
+
+    if (!stellarAddress || typeof stellarAddress !== 'string') {
+      res.status(400).json({
+        error: 'Validation failed',
+        details: [{ field: 'stellarAddress', message: 'stellarAddress is required' }],
+      });
+      return;
+    }
+
+    if (!isValidStellarAddress(stellarAddress)) {
+      res.status(400).json({
+        error: 'Validation failed',
+        details: [
+          {
+            field: 'stellarAddress',
+            message: 'Invalid Stellar address format (must be 56 characters, starting with G)',
+          },
+        ],
+      });
+      return;
+    }
+
+    const existing = await prisma.contributor.findUnique({
+      where: { stellarAddress },
+    });
+
+    if (existing) {
+      res.status(409).json({ error: 'Contributor already exists with this Stellar address' });
+      return;
+    }
+
+    const contributor = await prisma.contributor.create({
+      data: {
+        stellarAddress,
+        displayName: displayName ?? null,
+        githubUsername: githubUsername ?? null,
+      },
+    });
+
+    res.status(201).json({ data: contributor });
+  } catch (error) {
+    console.error('createContributor error:', error);
+    res.status(500).json({ error: 'Failed to create contributor' });
   }
 }
 
@@ -243,6 +310,7 @@ async function getLeaderboard(req: Request, res: Response): Promise<void> {
 }
 
 export const contributorController = {
+  createContributor,
   getContributorProfile,
   getContributorByAddress,
   getContributorStats,

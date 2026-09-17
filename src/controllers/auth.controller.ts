@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { generateNonce, verifyStellarSignature, signToken } from '../lib/auth';
+import { isValidStellarAddress } from '../validators/stellar.validator';
 
 /**
  * POST /auth/challenge
@@ -14,6 +15,19 @@ async function getChallenge(req: Request, res: Response): Promise<void> {
       res.status(400).json({
         error: 'Validation failed',
         details: [{ field: 'stellarAddress', message: 'stellarAddress is required' }],
+      });
+      return;
+    }
+
+    if (!isValidStellarAddress(stellarAddress)) {
+      res.status(400).json({
+        error: 'Validation failed',
+        details: [
+          {
+            field: 'stellarAddress',
+            message: 'Invalid Stellar address format (must be 56 characters, starting with G)',
+          },
+        ],
       });
       return;
     }
@@ -54,6 +68,19 @@ async function verifyChallenge(req: Request, res: Response): Promise<void> {
       res.status(400).json({
         error: 'Validation failed',
         details: [{ field: 'stellarAddress', message: 'stellarAddress is required' }],
+      });
+      return;
+    }
+
+    if (!isValidStellarAddress(stellarAddress)) {
+      res.status(400).json({
+        error: 'Validation failed',
+        details: [
+          {
+            field: 'stellarAddress',
+            message: 'Invalid Stellar address format (must be 56 characters, starting with G)',
+          },
+        ],
       });
       return;
     }
