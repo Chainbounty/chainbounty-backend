@@ -1,5 +1,6 @@
 import { BountyDifficulty, BountyStatus } from '@prisma/client';
 import type { Request, Response, NextFunction } from 'express';
+import { isValidStellarAddress } from './stellar.validator';
 
 export interface ValidationError {
   field: string;
@@ -112,6 +113,24 @@ function validateCreateBounty(req: Request, res: Response, next: NextFunction): 
     }
   }
 
+  if (body.creatorAddress !== undefined) {
+    if (typeof body.creatorAddress !== 'string' || !isValidStellarAddress(body.creatorAddress)) {
+      errors.push({
+        field: 'creatorAddress',
+        message: 'creatorAddress must be a valid Stellar public key (56 characters, starts with G)',
+      });
+    }
+  }
+
+  if (body.stellarAddress !== undefined) {
+    if (typeof body.stellarAddress !== 'string' || !isValidStellarAddress(body.stellarAddress)) {
+      errors.push({
+        field: 'stellarAddress',
+        message: 'stellarAddress must be a valid Stellar public key (56 characters, starts with G)',
+      });
+    }
+  }
+
   if (errors.length > 0) {
     res.status(400).json({ error: 'Validation failed', details: errors });
     return;
@@ -188,6 +207,28 @@ function validateListBounties(req: Request, res: Response, next: NextFunction): 
   // sortOrder
   if (query.sortOrder !== undefined && !['asc', 'desc'].includes(query.sortOrder as string)) {
     errors.push({ field: 'sortOrder', message: 'sortOrder must be asc or desc' });
+  }
+
+  if (query.creatorAddress !== undefined) {
+    if (typeof query.creatorAddress !== 'string' || !isValidStellarAddress(query.creatorAddress)) {
+      errors.push({
+        field: 'creatorAddress',
+        message: 'creatorAddress must be a valid Stellar public key (56 characters, starts with G)',
+      });
+    }
+  }
+
+  if (query.claimantAddress !== undefined) {
+    if (
+      typeof query.claimantAddress !== 'string' ||
+      !isValidStellarAddress(query.claimantAddress)
+    ) {
+      errors.push({
+        field: 'claimantAddress',
+        message:
+          'claimantAddress must be a valid Stellar public key (56 characters, starts with G)',
+      });
+    }
   }
 
   if (errors.length > 0) {

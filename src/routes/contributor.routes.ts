@@ -15,4 +15,6 @@ router.get('/:id/stats', contributorController.getContributorStats);
 // GET /contributors/address/:address — get contributor by Stellar address
 router.get('/address/:address', contributorController.getContributorByAddress);
 
+router.post('/', contributorController.createContributor);
+
 export default router;
