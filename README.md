@@ -230,6 +230,8 @@ chainbounty-backend/
 ## Documentation
 
 - [Environment Variables](./ENVIRONMENT.md) - Complete environment configuration guide
+- [Error Handling](./ERROR_HANDLING.md) - API error response and
+  status-code conventions
 - [Contributing Guide](./CONTRIBUTING.md) - How to contribute to the project
 - [API Documentation](http://localhost:3000/api-docs) - Interactive API docs (when server is running)
 

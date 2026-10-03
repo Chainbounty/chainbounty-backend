@@ -218,6 +218,9 @@ git push origin feature/your-feature-name
 
 ## API Documentation
 
+Follow [ERROR_HANDLING.md](./ERROR_HANDLING.md) when adding controller error
+responses or status-code branches.
+
 When adding new endpoints, update the OpenAPI/Swagger documentation:
 
 ```typescript
