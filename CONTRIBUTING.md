@@ -154,6 +154,9 @@ describe('POST /api/v1/bounties', () => {
 
 ## Database Changes
 
+For the complete development, deployment, recovery, and conflict-resolution
+workflow, see [DATABASE_MIGRATIONS.md](./DATABASE_MIGRATIONS.md).
+
 ### Creating Migrations
 
 ```bash
@@ -165,8 +168,10 @@ npx prisma migrate dev --name descriptive_name
 - One migration per logical change
 - Use descriptive names
 - Test migrations on a copy of production data
-- Never modify existing migrations
-- Include both `up` and `down` logic when possible
+- Never modify migrations that have already been applied to a shared
+  environment
+- Use a new forward corrective migration when a released change must be
+  reversed
 
 ## Pull Request Process
 
